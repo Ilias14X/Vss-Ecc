@@ -16,6 +16,7 @@ Le projet partage un secret (par exemple une clé privée) entre **n** participa
 | Contrôle des paramètres | `check_params` | Rejette tout couple (k, n) tel que (n−1) mod (k−1) ≠ 0 |
 | Anti-rejeu | `ReplayGuard` | Une soumission (session, indice, nonce) n'est acceptée qu'une fois |
 | Démonstration | `main.py` | Partage, vérification de chaque part, reconstruction du secret |
+| Interface web locale | `gui.py`, `web/index.html`, `checks.py` | Contrôle pas à pas et vérifications automatiques, pour la relecture |
 
 ## Notations
 
@@ -30,6 +31,8 @@ Le projet partage un secret (par exemple une clé privée) entre **n** participa
 - **RUSTSEC-2024-0398** : cet avis concerne la crate Rust `sharks`, dont les coefficients du polynôme étaient tirés dans [1, 255] au lieu de [0, 255], ce qui permet d'exclure des valeurs quand on repartage un même secret. Ici, `random_coefficient` utilise `secrets.randbelow(q)`, uniforme sur [0, q−1], zéro inclus. Un test le vérifie.
 - **Entrées** : `verify_share` renvoie `False` pour une part, un indice ou un engagement invalide, sans exception qui dépendrait du secret.
 - **Anti-rejeu** : `ReplayGuard` refuse de rejouer une soumission et lie chaque jeton à une session.
+
+> Le code se trouve dans le dossier `Vss_ECC_Latest/Vss-Ecc_Latest/` : s'y placer avant les commandes ci-dessous.
 
 ## Installation et lancement
 
@@ -49,12 +52,20 @@ Les scripts créent `.venv`, installent `requirements.txt`, lancent les tests et
 python3 -m venv .venv
 source .venv/bin/activate        # Windows : .venv\Scripts\activate
 pip install -r requirements.txt
-python3 -m pytest -q tests       # 22 tests
+python3 -m pytest -q tests       # 25 tests
 python3 main.py                  # démonstration de bout en bout
 python3 check.py                 # partage et reconstruction d'un petit secret
 ```
 
 Sur Windows, si PowerShell refuse le script : `Set-ExecutionPolicy -Scope Process Bypass`.
+
+## Interface graphique (pour la relecture)
+
+```bash
+python3 gui.py        # puis ouvrir http://127.0.0.1:8765 (s'ouvre seul en général)
+```
+
+La page propose six sections : contrôle (k, n), partage avec engagements, vérification de chaque part (avec option « corrompre une part »), reconstruction (y compris avec k − 1 parts), validation d'un point de courbe, et un bouton « Tout vérifier » qui rejoue les contrôles clés et peut lancer les tests pytest. Le serveur écoute seulement sur 127.0.0.1 et n'a aucune dépendance supplémentaire.
 
 ## Structure
 
@@ -63,7 +74,9 @@ curve.py               P-256, addition, multiplication, validate_point
 vss.py                 Shamir, Lagrange, Feldman, check_params, ReplayGuard
 main.py                démonstration de bout en bout
 check.py               vérification rapide du partage et de la reconstruction
-tests/test_security.py 22 tests (paramètres, points invalides, Feldman, RUSTSEC, rejeu)
+gui.py, checks.py      interface web locale et contrôles automatiques
+web/index.html         page de l'interface
+tests/test_security.py 25 tests (paramètres, points invalides, Feldman, RUSTSEC, rejeu, interface)
 requirements.txt       cryptography, pytest
 setup.sh, setup.ps1    création de l'environnement
 .vscode/               réglages pytest, lancement et extensions recommandées

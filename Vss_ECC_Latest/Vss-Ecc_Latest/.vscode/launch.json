@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "main.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/main.py",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Tests (pytest)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": [
+        "tests",
+        "-q"
+      ],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Interface web (gui.py)",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/gui.py",
+      "console": "integratedTerminal"
+    }
+  ]
+}

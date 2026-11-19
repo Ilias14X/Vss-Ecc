@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vss_ECC : vérification</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mute:#5d6b7c;--line:#dde2e8;--acc:#1f5fbf;--ok:#16794a;--okbg:#e3f4ea;--ko:#b3261e;--kobg:#fbe7e5}
+@media (prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1b222b;--ink:#e6ebf1;--mute:#9aa7b6;--line:#2c3643;--acc:#6aa5f5;--ok:#59c38c;--okbg:#17301f;--ko:#f08a82;--kobg:#3a1c1a}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,sans-serif}
+main{max-width:920px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:22px;margin:8px 0 2px}
+.sub{color:var(--mute);margin:0 0 18px}
+section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
+h2{font-size:16px;margin:0 0 4px}
+.help{color:var(--mute);font-size:13px;margin:0 0 12px}
+label{display:inline-block;margin:0 10px 8px 0;font-size:13px;color:var(--mute)}
+input[type=text],input[type=number]{display:block;margin-top:3px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;width:130px}
+input.wide{width:100%}
+button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 14px;font:inherit;cursor:pointer;margin:0 6px 6px 0}
+button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)}
+button:disabled{opacity:.5;cursor:default}
+.badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:13px;font-weight:600}
+.ok{background:var(--okbg);color:var(--ok)} .ko{background:var(--kobg);color:var(--ko)}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all}
+.row{display:flex;flex-wrap:wrap;align-items:flex-end}
+.msg{margin:8px 0;min-height:22px}
+pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;overflow:auto;font-size:12px;max-height:260px}
+</style>
+</head>
+<body>
+<main>
+<h1>Vss_ECC : partage de secret vérifiable sur P-256</h1>
+<p class="sub">Shamir + engagements de Feldman. Suivre les sections dans l'ordre, ou lancer directement les vérifications automatiques (section 6).</p>
+
+<section id="s1">
+<h2>1. Paramètres (k, n)</h2>
+<p class="help">k = seuil, n = nombre de participants. Règle : (n − 1) mod (k − 1) = 0. Tout autre couple est rejeté.</p>
+<div class="row">
+<label>k (seuil)<input type="number" id="k" value="3" min="1"></label>
+<label>n (participants)<input type="number" id="n" value="5" min="1"></label>
+<span id="pbadge" class="badge"></span>
+</div>
+<div>
+<button class="ghost" onclick="setKN(3,5)">(3,5)</button>
+<button class="ghost" onclick="setKN(5,9)">(5,9)</button>
+<button class="ghost" onclick="setKN(11,21)">(11,21)</button>
+<button class="ghost" onclick="setKN(10,20)">(10,20) invalide</button>
+<button class="ghost" onclick="setKN(4,8)">(4,8) invalide</button>
+</div>
+<div id="pmsg" class="msg"></div>
+</section>
+
+<section id="s2">
+<h2>2. Partage du secret (dealer)</h2>
+<p class="help">Le secret est optionnel (entier ou hexadécimal 0x…, inférieur à l'ordre q de P-256) ; vide = secret aléatoire.</p>
+<label>Secret<input type="text" id="secret" class="wide" style="width:420px" placeholder="aléatoire"></label><br>
+<button onclick="doShare()">Générer les parts et les engagements</button>
+<div id="shareOut"></div>
+</section>
+
+<section id="s3">
+<h2>3. Vérification par chaque participant (Feldman)</h2>
+<p class="help">Test : s<sub>i</sub>·G = Σ i<sup>j</sup>·C<sub>j</sub>. Cochez « corrompre » pour modifier une part (+1) et voir la détection.</p>
+<button onclick="doVerify()" id="vbtn" disabled>Vérifier toutes les parts</button>
+<div id="verifyOut"></div>
+</section>
+
+<section id="s4">
+<h2>4. Reconstruction</h2>
+<p class="help">Choisissez des parts (au moins k pour retrouver le secret). Avec k − 1 parts, le résultat n'a aucun rapport avec le secret.</p>
+<div id="recChoices"></div>
+<button onclick="doRec()" id="rbtn" disabled>Reconstruire</button>
+<div id="recOut" class="msg"></div>
+</section>
+
+<section id="s5">
+<h2>5. Validation d'un point de courbe</h2>
+<p class="help">P-256 a un cofacteur 1 : tout point valide autre que l'infini est d'ordre q. Un point hors courbe ou d'une autre courbe est refusé.</p>
+<div class="row">
+<label>x (0x…)<input type="text" id="px" class="wide" style="width:300px"></label>
+<label>y (0x…)<input type="text" id="py" class="wide" style="width:300px"></label>
+</div>
+<button class="ghost" onclick="presetG()">G (valide)</button>
+<button class="ghost" onclick="presetG(1)">G avec y + 1</button>
+<button class="ghost" onclick="setPoint('5','7')">(5, 7) autre courbe</button>
+<button onclick="doPoint()">Valider</button>
+<div id="pointOut" class="msg"></div>
+</section>
+
+<section id="s6">
+<h2>6. Vérifications automatiques</h2>
+<p class="help">Rejoue les contrôles clés : contrainte (n−1) mod (k−1), cofacteur, points invalides, RUSTSEC-2024-0398, anti-rejeu, partage complet.</p>
+<button onclick="doChecks()">Tout vérifier</button>
+<button class="ghost" onclick="doTests()">Lancer les tests pytest</button>
+<div id="checkOut"></div>
+<pre id="testOut" hidden></pre>
+</section>
+</main>
+
+<script>
+const G={x:"0x6B17D1F2E12C4247F8BCE6E563A440F277037D812DEB33A0F4A13945D898C296",y:"0x4FE342E2FE1A7F9B8EE7EB4A7C0F9E162BCE33576B315ECECBB6406837BF51F5"};
+let state={k:3,n:5,shares:[],comms:[],secret:null};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const badge=(ok,t)=>`<span class="badge ${ok?'ok':'ko'}">${esc(t)}</span>`;
+async function api(path,body){
+  try{const r=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})});return await r.json();}
+  catch(e){return {ok:false,error:"serveur injoignable : "+e};}
+}
+function setKN(k,n){$("k").value=k;$("n").value=n;checkParams();}
+async function checkParams(){
+  const k=+$("k").value,n=+$("n").value;
+  const r=await api("/api/params",{k,n});
+  $("pbadge").className="badge "+(r.ok?"ok":"ko");
+  $("pbadge").textContent=r.ok?"Valide":"Rejeté";
+  $("pmsg").textContent=r.ok?`(n − 1) mod (k − 1) = (${n} − 1) mod (${k} − 1) = 0`:(r.error||"");
+}
+$("k").oninput=$("n").oninput=checkParams;
+async function doShare(){
+  const k=+$("k").value,n=+$("n").value;
+  const r=await api("/api/share",{k,n,secret:$("secret").value.trim()});
+  if(!r.ok){$("shareOut").innerHTML=badge(false,"Refusé")+" "+esc(r.error);return;}
+  state={k,n,shares:r.shares,comms:r.commitments,secret:r.secret,corrupt:{}};
+  let h=`<div class="msg">Secret d : <code>${esc(r.secret)}</code></div>`;
+  h+=`<table><tr><th>Participant i</th><th>Part s<sub>i</sub> = f(i)</th></tr>`+r.shares.map(s=>`<tr><td>${s[0]}</td><td class="mono">${esc(s[1])}</td></tr>`).join("")+`</table>`;
+  h+=`<table><tr><th>Engagement</th><th>Point C<sub>j</sub> = a<sub>j</sub>·G (x, y)</th></tr>`+r.commitments.map((c,j)=>`<tr><td>C<sub>${j}</sub>${j==0?" = Q (clé publique)":""}</td><td class="mono">${esc(c[0])}<br>${esc(c[1])}</td></tr>`).join("")+`</table>`;
+  $("shareOut").innerHTML=h;
+  $("verifyOut").innerHTML="";$("recOut").innerHTML="";
+  buildVerifyTable();buildRecChoices();
+  $("vbtn").disabled=false;$("rbtn").disabled=false;
+}
+function buildVerifyTable(){
+  $("verifyOut").innerHTML=`<table id="vt"><tr><th>i</th><th>Corrompre</th><th>Résultat</th></tr>`+
+   state.shares.map(s=>`<tr><td>${s[0]}</td><td><input type="checkbox" id="c${s[0]}"></td><td id="v${s[0]}">-</td></tr>`).join("")+`</table>`;
+}
+function currentShares(){
+  return state.shares.map(s=>{const c=$("c"+s[0]);let y=BigInt(s[1]);if(c&&c.checked)y=y+1n;return [s[0],"0x"+y.toString(16)];});
+}
+async function doVerify(){
+  const r=await api("/api/verify",{shares:currentShares(),commitments:state.comms,n:state.n});
+  if(!r.ok){alert(r.error);return;}
+  r.results.forEach(x=>{$("v"+x.i).innerHTML=badge(x.valid,x.valid?"part valide":"part invalide");});
+}
+function buildRecChoices(){
+  $("recChoices").innerHTML=state.shares.map((s,idx)=>`<label><input type="checkbox" class="rc" value="${s[0]}" ${idx<state.k?"checked":""}> P${s[0]}</label>`).join("");
+}
+async function doRec(){
+  const chosen=[...document.querySelectorAll(".rc:checked")].map(c=>+c.value);
+  const sel=state.shares.filter(s=>chosen.includes(s[0]));
+  const r=await api("/api/reconstruct",{shares:sel,k:state.k});
+  if(!r.ok){$("recOut").innerHTML=badge(false,"Erreur")+" "+esc(r.error);return;}
+  const same=BigInt(r.value)===BigInt(state.secret);
+  $("recOut").innerHTML=badge(same,same?"Secret retrouvé":"Résultat différent du secret")+
+   ` <code>${esc(r.value)}</code>`+(r.note?`<br>${esc(r.note)}`:"");
+}
+function setPoint(x,y){$("px").value=x;$("py").value=y;}
+function presetG(bump){let y=BigInt(G.y);if(bump)y+=1n;setPoint(G.x,"0x"+y.toString(16));}
+async function doPoint(){
+  const r=await api("/api/point",{x:$("px").value.trim(),y:$("py").value.trim()});
+  $("pointOut").innerHTML=r.valid?badge(true,"Point accepté"):badge(false,"Point rejeté")+" "+esc(r.why||r.error||"");
+}
+function fmt(d){return typeof d==="object"?Object.entries(d).map(([k,v])=>`${k} : ${v}`).join(" ; "):d;}
+async function doChecks(){
+  $("checkOut").innerHTML="Calcul en cours…";
+  const r=await api("/api/checks");
+  if(!r.ok){$("checkOut").textContent=r.error;return;}
+  const all=r.results.every(x=>x.ok);
+  $("checkOut").innerHTML=`<div class="msg">${badge(all,all?"Tous les contrôles passent":"Au moins un contrôle échoue")}</div>`+
+   `<table>`+r.results.map(x=>`<tr><td>${badge(x.ok,x.ok?"OK":"ÉCHEC")}</td><td>${esc(x.name)}<br><span class="mono">${esc(fmt(x.detail))}</span></td></tr>`).join("")+`</table>`;
+}
+async function doTests(){
+  const el=$("testOut");el.hidden=false;el.textContent="Exécution de pytest…";
+  const r=await api("/api/tests");
+  el.textContent=(r.ok?"RÉUSSI\n":"ÉCHEC\n")+(r.output||r.error||"");
+}
+presetG();checkParams();
+</script>
+</body>
+</html>

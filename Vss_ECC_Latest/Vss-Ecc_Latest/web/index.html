@@ -5,39 +5,79 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Vss_ECC : vérification</title>
 <style>
-:root{--bg:#f6f7f9;--card:#fff;--ink:#1c2430;--mute:#5d6b7c;--line:#dde2e8;--acc:#1f5fbf;--ok:#16794a;--okbg:#e3f4ea;--ko:#b3261e;--kobg:#fbe7e5}
-@media (prefers-color-scheme:dark){:root{--bg:#12161c;--card:#1b222b;--ink:#e6ebf1;--mute:#9aa7b6;--line:#2c3643;--acc:#6aa5f5;--ok:#59c38c;--okbg:#17301f;--ko:#f08a82;--kobg:#3a1c1a}}
+:root{
+  --bg:#f2f5f7;--card:#fff;--ink:#15202b;--mute:#667581;--line:#dfe6ea;
+  --navy:#102a43;--navy-2:#1b4965;--acc:#137d73;--acc-light:#e6f4f1;
+  --ok:#17734d;--okbg:#e9f5ef;--ko:#a33a32;--kobg:#f9ecea;
+  --shadow:0 12px 32px rgba(25,49,66,.08)
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#0d171d;--card:#14232b;--ink:#edf4f1;--mute:#9fb0b7;--line:#29404a;--navy:#09161d;--navy-2:#183e50;--acc:#63c6b7;--acc-light:#183a38;--ok:#79cea5;--okbg:#173729;--ko:#ff9b91;--kobg:#412421;--shadow:0 12px 32px rgba(0,0,0,.22)}
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,Segoe UI,sans-serif}
-main{max-width:920px;margin:0 auto;padding:20px 16px 60px}
-h1{font-size:22px;margin:8px 0 2px}
-.sub{color:var(--mute);margin:0 0 18px}
-section{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px;margin:14px 0}
-h2{font-size:16px;margin:0 0 4px}
-.help{color:var(--mute);font-size:13px;margin:0 0 12px}
-label{display:inline-block;margin:0 10px 8px 0;font-size:13px;color:var(--mute)}
-input[type=text],input[type=number]{display:block;margin-top:3px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font:inherit;width:130px}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+body:before{content:"";position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 85% 8%,rgba(19,125,115,.09),transparent 24%),radial-gradient(circle at 8% 70%,rgba(27,73,101,.06),transparent 28%)}
+main{max-width:1120px;margin:0 auto;padding:28px 24px 72px}
+.hero{position:relative;overflow:hidden;border-radius:18px;padding:30px 34px 28px;background:linear-gradient(125deg,var(--navy),var(--navy-2));color:#fff;box-shadow:var(--shadow)}
+.hero:after{content:"";position:absolute;width:240px;height:240px;right:-75px;top:-110px;border-radius:50%;border:42px solid rgba(255,255,255,.055)}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;text-transform:uppercase;letter-spacing:.14em;font-size:11px;font-weight:800;color:#8edbd0;margin-bottom:8px}
+.eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:#6ad8c5;box-shadow:0 0 0 5px rgba(106,216,197,.12)}
+h1{font-family:Georgia,"Times New Roman",serif;font-size:34px;line-height:1.12;margin:0 0 10px;font-weight:700;letter-spacing:-.02em}
+.sub{max-width:720px;color:#bed0d7;margin:0;font-size:14px}
+.step-nav{display:flex;gap:6px;overflow-x:auto;margin:16px 0 8px;padding:4px 2px}
+.step-nav a{flex:none;text-decoration:none;color:var(--mute);border:1px solid var(--line);background:var(--card);border-radius:999px;padding:7px 11px;font-size:12px;font-weight:700;transition:.18s}
+.step-nav a:hover{color:var(--acc);border-color:var(--acc);transform:translateY(-1px)}
+section{scroll-margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px;margin:12px 0;box-shadow:0 4px 16px rgba(25,49,66,.035)}
+section:hover{border-color:rgba(19,125,115,.24)}
+h2{display:flex;align-items:center;gap:10px;font-size:17px;margin:0 0 5px;color:var(--ink)}
+h2:before{display:grid;place-items:center;content:attr(data-step);width:28px;height:28px;border-radius:8px;background:var(--acc-light);color:var(--acc);font-size:12px;font-family:ui-monospace,Consolas,monospace}
+.help{color:var(--mute);font-size:13px;margin:0 0 16px;max-width:760px}
+label{display:inline-flex;flex-direction:column;margin:0 12px 10px 0;font-size:12px;font-weight:700;color:var(--mute)}
+input[type=text],input[type=number]{display:block;margin-top:5px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit;width:140px;outline:none;transition:.15s}
+input[type=text]:focus,input[type=number]:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-light)}
 input.wide{width:100%}
-button{background:var(--acc);color:#fff;border:0;border-radius:6px;padding:8px 14px;font:inherit;cursor:pointer;margin:0 6px 6px 0}
-button.ghost{background:transparent;color:var(--acc);border:1px solid var(--line)}
-button:disabled{opacity:.5;cursor:default}
-.badge{display:inline-block;padding:3px 9px;border-radius:99px;font-size:13px;font-weight:600}
+button{background:var(--acc);color:#fff;border:1px solid var(--acc);border-radius:8px;padding:9px 15px;font:inherit;font-weight:750;font-size:13px;cursor:pointer;margin:0 7px 7px 0;box-shadow:0 4px 10px rgba(19,125,115,.12);transition:.16s}
+button:hover:not(:disabled){filter:brightness(1.06);transform:translateY(-1px)}
+button:active:not(:disabled){transform:none}
+button.ghost{background:transparent;color:var(--acc);border-color:var(--line);box-shadow:none}
+button.ghost:hover:not(:disabled){background:var(--acc-light);border-color:var(--acc)}
+button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;font-size:12px;font-weight:800}
+.badge:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
 .ok{background:var(--okbg);color:var(--ok)} .ko{background:var(--kobg);color:var(--ko)}
-table{border-collapse:collapse;width:100%;font-size:13px;margin-top:6px}
-th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-code,.mono{font-family:ui-monospace,Consolas,monospace;font-size:12px;word-break:break-all}
-.row{display:flex;flex-wrap:wrap;align-items:flex-end}
-.msg{margin:8px 0;min-height:22px}
-pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;overflow:auto;font-size:12px;max-height:260px}
+table{border-collapse:separate;border-spacing:0;width:100%;font-size:13px;margin-top:10px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th{background:var(--bg);color:var(--mute);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+code,.mono{font-family:"Cascadia Code",Consolas,ui-monospace,monospace;font-size:12px;word-break:break-all}
+.row{display:flex;flex-wrap:wrap;align-items:flex-end;gap:2px}
+.msg{margin:10px 0;min-height:24px}
+pre{background:#0d2029;border:1px solid #1d3945;border-radius:10px;color:#d7e8e4;padding:14px;overflow:auto;font-size:12px;max-height:260px}
+#recChoices{display:flex;flex-wrap:wrap}
+#recChoices label{display:inline-flex;flex-direction:row;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;padding:7px 10px;background:var(--bg);cursor:pointer}
+#recChoices input{accent-color:var(--acc)}
+@media(max-width:650px){main{padding:12px 12px 48px}.hero{padding:24px 20px;border-radius:14px}h1{font-size:27px}.sub{font-size:13px}section{padding:16px}input[type=text],input[type=number]{width:100%}.row label{width:100%}.step-nav{margin-top:12px}}
 </style>
 </head>
 <body>
 <main>
-<h1>Vss_ECC : partage de secret vérifiable sur P-256</h1>
-<p class="sub">Shamir + engagements de Feldman. Suivre les sections dans l'ordre, ou lancer directement les vérifications automatiques (section 6).</p>
+<header class="hero">
+<span class="eyebrow">Laboratoire cryptographique</span>
+<h1>Vss_ECC</h1>
+<p class="sub">Partage de secret vérifiable sur P-256<br>Shamir + engagements de Feldman.</p>
+</header>
+<nav class="step-nav" aria-label="Sections">
+<a href="#s1">Paramètres</a>
+<a href="#s2">Partage</a>
+<a href="#s3">Vérification</a>
+<a href="#s4">Reconstruction</a>
+<a href="#s5">Point P-256</a>
+<a href="#s6">Tests</a>
+</nav>
 
 <section id="s1">
-<h2>1. Paramètres (k, n)</h2>
+<h2 data-step="1">Paramètres (k, n)</h2>
 <p class="help">k = seuil, n = nombre de participants. Règle : (n − 1) mod (k − 1) = 0. Tout autre couple est rejeté.</p>
 <div class="row">
 <label>k (seuil)<input type="number" id="k" value="3" min="1"></label>
@@ -55,7 +95,7 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:
 </section>
 
 <section id="s2">
-<h2>2. Partage du secret (dealer)</h2>
+<h2 data-step="2">Partage du secret (dealer)</h2>
 <p class="help">Le secret est optionnel (entier ou hexadécimal 0x…, inférieur à l'ordre q de P-256) ; vide = secret aléatoire.</p>
 <label>Secret<input type="text" id="secret" class="wide" style="width:420px" placeholder="aléatoire"></label><br>
 <button onclick="doShare()">Générer les parts et les engagements</button>
@@ -63,14 +103,14 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:
 </section>
 
 <section id="s3">
-<h2>3. Vérification par chaque participant (Feldman)</h2>
+<h2 data-step="3">Vérification par chaque participant (Feldman)</h2>
 <p class="help">Test : s<sub>i</sub>·G = Σ i<sup>j</sup>·C<sub>j</sub>. Cochez « corrompre » pour modifier une part (+1) et voir la détection.</p>
 <button onclick="doVerify()" id="vbtn" disabled>Vérifier toutes les parts</button>
 <div id="verifyOut"></div>
 </section>
 
 <section id="s4">
-<h2>4. Reconstruction</h2>
+<h2 data-step="4">Reconstruction</h2>
 <p class="help">Choisissez des parts (au moins k pour retrouver le secret). Avec k − 1 parts, le résultat n'a aucun rapport avec le secret.</p>
 <div id="recChoices"></div>
 <button onclick="doRec()" id="rbtn" disabled>Reconstruire</button>
@@ -78,7 +118,7 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:
 </section>
 
 <section id="s5">
-<h2>5. Validation d'un point de courbe</h2>
+<h2 data-step="5">Validation d'un point de courbe</h2>
 <p class="help">P-256 a un cofacteur 1 : tout point valide autre que l'infini est d'ordre q. Un point hors courbe ou d'une autre courbe est refusé.</p>
 <div class="row">
 <label>x (0x…)<input type="text" id="px" class="wide" style="width:300px"></label>
@@ -92,7 +132,7 @@ pre{background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:
 </section>
 
 <section id="s6">
-<h2>6. Vérifications automatiques</h2>
+<h2 data-step="6">Vérifications automatiques</h2>
 <p class="help">Rejoue les contrôles clés : contrainte (n−1) mod (k−1), cofacteur, points invalides, RUSTSEC-2024-0398, anti-rejeu, partage complet.</p>
 <button onclick="doChecks()">Tout vérifier</button>
 <button class="ghost" onclick="doTests()">Lancer les tests pytest</button>
